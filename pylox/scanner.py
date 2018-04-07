@@ -54,7 +54,7 @@ def getNextToken(line, currIdx, lineNo):
     }
     token = switcher.get(line[currIdx])
     if token is not None:
-        return token, line[currIdx], currIdx
+        return token, line[currIdx], currIdx, lineNo
     else:
         c1 = line[currIdx]
         if currIdx >= len(line) - 1:
@@ -64,45 +64,43 @@ def getNextToken(line, currIdx, lineNo):
         if c1 == '"':
             try:
                 found = re.search('^"(.*?)"', line[currIdx:]).group(1)
-                return TokenType.STRING, found, currIdx + 1
+                return TokenType.STRING, found, currIdx + 1, lineNo
             except AttributeError:
                 error("No closing quote", lineNo)
         elif c1.isalpha() or c1 == "_":
             found = re.search("(^[a-zA-Z][a-zA-Z0-9_]*)", line[currIdx:]).group(1)
-            return checkIfKeywordType(found), str(found), currIdx
+            return checkIfKeywordType(found), str(found), currIdx, lineNo
         elif c1.isdigit():
             found = re.search("(^[+ -]?[0-9]+([.][0-9]*)?)", line[currIdx:]).group(1)
-            return TokenType.NUMBER, str(found), currIdx
+            return TokenType.NUMBER, str(found), currIdx, lineNo
         elif c1 == '!':
             if c2 == "=":
-                return TokenType.BANG_EQUAL, line[currIdx:currIdx + 2], currIdx
+                return TokenType.BANG_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
             else:
-                return TokenType.BANG, line[currIdx], currIdx
+                return TokenType.BANG, line[currIdx], currIdx, lineNo
         elif c1 == '=':
             if c2 == '=':
-                return TokenType.EQUAL_EQUAL, line[currIdx:currIdx + 2], currIdx
+                return TokenType.EQUAL_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
             else:
-                return TokenType.EQUAL, line[currIdx], currIdx
+                return TokenType.EQUAL, line[currIdx], currIdx, lineNo
         elif c1 == '<':
             if c2 == '=':
-                return TokenType.LESS_EQUAL, line[currIdx:currIdx + 2], currIdx
+                return TokenType.LESS_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
             else:
-                return TokenType.LESS, line[currIdx], currIdx
+                return TokenType.LESS, line[currIdx], currIdx, lineNo
         elif c1 == '>':
             if c2 == '=':
-                return TokenType.GREATER_EQUAL, line[currIdx:currIdx + 2], currIdx
+                return TokenType.GREATER_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
             else:
-                return TokenType.GREATER, line[currIdx], currIdx
+                return TokenType.GREATER, line[currIdx], currIdx, lineNo
         elif c1 == '/':
             if c2 == '/':
-                return TokenType.COMMENT, line[currIdx:], currIdx
+                return TokenType.COMMENT, line[currIdx:], currIdx, lineNo
             else:
-                return TokenType.SLASH, line[currIdx], currIdx
+                return TokenType.SLASH, line[currIdx], currIdx, lineNo
 
 
 def checkIfKeywordType(text):
-#    AND CLASS ELSE FALSE FUN FOR IF NIL OR
-#    PRINT RETURN SUPER THIS TRUE VAR WHILE
     switcher = {
         "and"       : TokenType.AND,
         "class"     : TokenType.CLASS,
@@ -122,6 +120,6 @@ def checkIfKeywordType(text):
         "while"     : TokenType.WHILE
     }
     value = switcher.get(text)
-    if value == None:
+    if value is None:
         value = TokenType.IDENTIFIER
     return value
