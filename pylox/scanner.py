@@ -14,7 +14,7 @@ TokenType = Enum('TokenType',
 """, module=__name__)
 
 
-def tokenize(line, lineNo):
+def tokenize(line, lineNo=0):
     line = line.strip()
     tokens = list()
     currIdx = 0
