@@ -3,7 +3,7 @@ from .error_reporting import error
 
 
 def runLine(lineNo, line):
-    tokens = tokenize(line)
+    tokens = tokenize(line, lineNo)
 
     if lineNo > 0:
         print("Line {0}".format(lineNo))

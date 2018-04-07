@@ -1,1 +1,10 @@
-var language = "lox";
+// This is a simple lox program
+print "Hello, world!";
+var a = 1;
+a = a + 1;
+var t = a == 2;
+if (t == true) {
+    print "t is 2";
+} else {
+    print "t is not 2";
+}
