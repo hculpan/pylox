@@ -1,7 +1,7 @@
 import re
 
 from enum import Enum
-from .error_reporting import error
+from pylox.error_reporting import error
 
 TokenType = Enum('TokenType',
 """
@@ -33,6 +33,9 @@ def tokenize(line, lineNo=0):
 
         if currIdx >= len(line):
             break
+
+    eolToken = TokenType.EOL, "<EOL>", currIdx, lineNo
+    tokens.append(eolToken)
 
     return tokens
 

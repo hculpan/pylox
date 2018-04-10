@@ -1,4 +1,4 @@
-from .scanner import tokenize, TokenType
+from pylox.lexer.scanner import tokenize
 from .error_reporting import error
 
 
