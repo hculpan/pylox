@@ -9,6 +9,19 @@ class ExprType(Enum):
     BINARY = 5
 
 
+class DataType(Enum):
+    UNKNOWN = 1
+    INTEGER = 2
+    DOUBLE = 3
+    STRING = 4
+    BOOLEAN = 5
+    NIL = 6
+
+
+def defaultEval(self):
+    return None, DataType.UNKNOWN
+
+
 class Expr:
     def __init__(self, exprType=ExprType.EXPRESSION, exprToken=None):
         self.right = None
@@ -16,6 +29,8 @@ class Expr:
         self.type = exprType
         self.token = exprToken
         self.eval = defaultEval
+        self.value = None
+        self.dataType = DataType.UNKNOWN
 
     def __repr__(self):
         if self.token is not None:
@@ -23,8 +38,8 @@ class Expr:
         else:
             return " ({0} {1}:{2}) ".format(self.type.name, self.left, self.right)
 
+    def evaluate(self):
+        return self.eval(self)
 
-def defaultEval(self):
-    return None
 
 

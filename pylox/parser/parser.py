@@ -1,6 +1,7 @@
 from pylox.ast.Expr import Expr, ExprType
-from pylox.lexer.scanner import TokenType
 from pylox.parser.ExprEvals import *
+from pylox.ast.Expr import DataType
+from pylox.lexer.scanner import TokenType
 
 currIdx = 0
 tokens = list()
@@ -26,6 +27,7 @@ def equality():
     while matchesToken(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
         leftExpr = expr
         expr = Expr(ExprType.BINARY, nextToken())
+        expr.eval = evalEquality
         expr.left = leftExpr
         expr.right = comparison()
 
@@ -38,6 +40,7 @@ def comparison():
     while matchesToken(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL):
         leftExpr = expr
         expr = Expr(ExprType.BINARY, nextToken())
+        expr.eval = evalComparison
         expr.left = leftExpr
         expr.right = addition()
 
@@ -50,6 +53,7 @@ def addition():
     while matchesToken(TokenType.PLUS, TokenType.MINUS):
         leftExpr = expr
         expr = Expr(ExprType.BINARY, nextToken())
+        expr.eval = evalAddition
         expr.left = leftExpr
         expr.right = multiplication()
 
@@ -62,6 +66,7 @@ def multiplication():
     while matchesToken(TokenType.SLASH, TokenType.STAR):
         leftExpr = expr
         expr = Expr(ExprType.BINARY, nextToken())
+        expr.eval = evalMultiplication
         expr.left = leftExpr
         expr.right = unary()
 
@@ -71,6 +76,7 @@ def multiplication():
 def unary():
     if matchesToken(TokenType.BANG, TokenType.MINUS):
         expr = Expr(ExprType.UNARY, nextToken())
+        expr.eval = evalUnary
         expr.right = unary()
         return expr
     else:
@@ -79,18 +85,39 @@ def unary():
 
 def primary():
     result = Expr()
-    if matchesToken(TokenType.FALSE, TokenType.TRUE, TokenType.NIL, TokenType.STRING, TokenType.NUMBER):
-        result.type = ExprType.LITERAL
-        result.token = nextToken()
-        result.eval = evalLiteral
-    elif matchesToken(TokenType.LEFT_PAREN):
+    if matchesToken(TokenType.LEFT_PAREN):
         result.type = ExprType.GROUPING
         result.token = nextToken()
         result.right = addition()
+        result.eval = evalGrouping
         if not matchesToken(TokenType.RIGHT_PAREN):
             error("Expecting ')', found {0}".format(peekToken()[1]), peekToken()[3])
         else:
             nextToken()
+    else:
+        result.type = ExprType.LITERAL
+        result.eval = evalLiteral
+        result.token = peekToken()
+        if matchesToken(TokenType.FALSE):
+            result.value = False
+            result.dataType = DataType.BOOLEAN
+        elif matchesToken(TokenType.TRUE):
+            result.value = True
+            result.dataType = DataType.BOOLEAN
+        elif matchesToken(TokenType.NIL):
+            result.value = None
+            result.dataType = DataType.NIL
+        elif matchesToken(TokenType.STRING):
+            result.value = result.token[1]
+            result.dataType = DataType.STRING
+        elif matchesToken(TokenType.NUMBER):
+            if result.token[1].find(".") > -1:
+                result.value = float(result.token[1])
+                result.dataType = DataType.DOUBLE
+            else:
+                result.value = int(result.token[1])
+                result.dataType = DataType.INTEGER
+        nextToken()
 
     return result
 

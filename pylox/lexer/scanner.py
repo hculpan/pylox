@@ -1,18 +1,7 @@
 import re
 
-from enum import Enum
 from pylox.error_reporting import error
-
-TokenType = Enum('TokenType',
-"""
-        LEFT_PAREN RIGHT_PAREN LEFT_BRACE RIGHT_BRACE COMMA DOT MINUS PLUS SEMICOLON SLASH STAR
-        BANG BANG_EQUAL EQUAL EQUAL_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL
-        IDENTIFIER STRING NUMBER COMMENT
-        AND CLASS ELSE FALSE FUN FOR IF NIL OR
-        PRINT RETURN SUPER THIS TRUE VAR WHILE
-        EOF WHITESPACE EOL
-""", module=__name__)
-
+from pylox.lexer.TokenType import TokenType
 
 def tokenize(line, lineNo=0):
     line = line.strip()

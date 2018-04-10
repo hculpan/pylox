@@ -1,13 +1,12 @@
 import sys
 from pathlib import Path
 
-from .run import runLine
-from .error_reporting import clearError
+from pylox.run import runLine
+from pylox.error_reporting import clearError
+from pylox.EvaluationException import EvaluationException
 
 
 def main():
-
-
     if len(sys.argv) == 1:
         runPrompt()
     elif len(sys.argv) == 2:
@@ -37,7 +36,18 @@ def runPrompt():
             print("PyLox session terminated")
             break
         else:
-            runLine(0, line)
+            try:
+                result = runLine(0, line)
+                printResult(result[0], result[1])
+            except EvaluationException as err:
+                if err.expr.token[3] > 0:
+                    print("ERROR: {0}".format(err.message))
+                else:
+                    print("ERROR: {0} [Line {1}]".format(err.message, err.expr.token[3]))
+
+
+def printResult(value, dataType):
+    print("{0} [{1}]".format(value, dataType))
 
 
 def runFile(file):
