@@ -1,15 +1,10 @@
 from pylox.lexer.scanner import tokenize
-from .error_reporting import error
+from pylox.parser.parser import parse
 
 
 def runLine(lineNo, line):
     tokens = tokenize(line, lineNo)
-
-    if lineNo > 0:
-        print("Line {0}".format(lineNo))
-    for token in tokens:
-        if token == "error":
-            error("Here's your error!", lineNo)
-        print("Token: {0}".format(token))
-
+    ast = parse(tokens)
+    # print("{0}".format(ast))
+    print("{0}".format(ast.eval(ast)))
 

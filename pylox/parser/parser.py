@@ -1,6 +1,6 @@
 from pylox.ast.Expr import Expr, ExprType
 from pylox.lexer.scanner import TokenType
-from pylox.error_reporting import error
+from pylox.parser.ExprEvals import *
 
 currIdx = 0
 tokens = list()
@@ -15,14 +15,55 @@ def parse(tokenList):
 
 def expression():
     expr = Expr()
-    currExpr = expr
-    while not isEndOfTokens():
-        currExpr.right = unary()
-        currExpr = currExpr.right
+    expr.eval = evalExpr
+    expr.right = equality()
+    return expr
 
-        # Temporary kludge
-        if matchesToken(TokenType.RIGHT_PAREN):
-            break
+
+def equality():
+    expr = comparison()
+
+    while matchesToken(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
+        leftExpr = expr
+        expr = Expr(ExprType.BINARY, nextToken())
+        expr.left = leftExpr
+        expr.right = comparison()
+
+    return expr
+
+
+def comparison():
+    expr = addition()
+
+    while matchesToken(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL):
+        leftExpr = expr
+        expr = Expr(ExprType.BINARY, nextToken())
+        expr.left = leftExpr
+        expr.right = addition()
+
+    return expr
+
+
+def addition():
+    expr = multiplication()
+
+    while matchesToken(TokenType.PLUS, TokenType.MINUS):
+        leftExpr = expr
+        expr = Expr(ExprType.BINARY, nextToken())
+        expr.left = leftExpr
+        expr.right = multiplication()
+
+    return expr
+
+
+def multiplication():
+    expr = unary()
+
+    while matchesToken(TokenType.SLASH, TokenType.STAR):
+        leftExpr = expr
+        expr = Expr(ExprType.BINARY, nextToken())
+        expr.left = leftExpr
+        expr.right = unary()
 
     return expr
 
@@ -38,20 +79,18 @@ def unary():
 
 def primary():
     result = Expr()
-    if matchesToken(TokenType.FALSE, TokenType.TRUE, TokenType.NIL, TokenType.NUMBER, TokenType.STRING):
+    if matchesToken(TokenType.FALSE, TokenType.TRUE, TokenType.NIL, TokenType.STRING, TokenType.NUMBER):
         result.type = ExprType.LITERAL
         result.token = nextToken()
+        result.eval = evalLiteral
     elif matchesToken(TokenType.LEFT_PAREN):
         result.type = ExprType.GROUPING
         result.token = nextToken()
-        result.right = expression()
+        result.right = addition()
         if not matchesToken(TokenType.RIGHT_PAREN):
             error("Expecting ')', found {0}".format(peekToken()[1]), peekToken()[3])
         else:
             nextToken()
-#    elif matchesToken(TokenType.RIGHT_PAREN):
-#        error("Found unmatched ')'", peekToken()[3])
-#        nextToken()
 
     return result
 
