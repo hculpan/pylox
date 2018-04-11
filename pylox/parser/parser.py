@@ -2,6 +2,7 @@ from pylox.ast.Expr import Expr, ExprType
 from pylox.parser.ExprEvals import *
 from pylox.ast.Expr import DataType
 from pylox.lexer.scanner import TokenType
+from pylox.ParseException import ParseException
 
 currIdx = 0
 tokens = list()
@@ -11,7 +12,23 @@ def parse(tokenList):
     global tokens, currIdx
     currIdx = 0
     tokens = tokenList
-    return expression()
+    return exprStmt()
+
+
+def consume(tokenType):
+    token = peekToken()
+    if token is None:
+        raise ParseException("Expected {0}, no more tokens found".format(tokenType), 0)
+    elif token[0] != tokenType:
+        raise ParseException("Expected {0}, found {1}".format(tokenType, token[1]), 0)
+    else:
+        nextToken()
+
+
+def exprStmt():
+    result = expression()
+    consume(TokenType.SEMICOLON)
+    return result
 
 
 def expression():
@@ -123,7 +140,10 @@ def primary():
 
 
 def peekToken():
-    return tokens[currIdx]
+    if isEndOfTokens():
+        return None
+    else:
+        return tokens[currIdx]
 
 
 def nextToken():
@@ -145,11 +165,12 @@ def prevToken():
 
 def matchesToken(*tokenTypess):
     currToken = peekToken()
-    for tokenType in tokenTypess:
-        if tokenType == currToken[0]:
-            return True
+    if currToken is not None:
+        for tokenType in tokenTypess:
+            if tokenType == currToken[0]:
+                return True
     return False
 
 
 def isEndOfTokens():
-    return matchesToken(TokenType.EOL)
+    return currIdx >= len(tokens)

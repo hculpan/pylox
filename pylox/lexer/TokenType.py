@@ -42,5 +42,4 @@ class TokenType(Enum):
     WHILE = 39
     EOF = 40
     WHITESPACE = 41
-    EOL = 42
 

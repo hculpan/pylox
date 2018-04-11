@@ -26,6 +26,8 @@ def evalUnary(self):
     v = self.right.evaluate()
     if self.token[0] == TokenType.MINUS and isNumberType(v[1]):
         return v[0] * -1, v[1]
+    else:
+        raise EvaluationException("Invalid data type for unary operator", self.right)
 
 
 def evalMultiplication(self):

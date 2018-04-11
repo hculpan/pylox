@@ -4,6 +4,7 @@ from pathlib import Path
 from pylox.run import runLine
 from pylox.error_reporting import clearError
 from pylox.EvaluationException import EvaluationException
+from pylox.ParseException import ParseException
 
 
 def main():
@@ -44,6 +45,8 @@ def runPrompt():
                     print("ERROR: {0}".format(err.message))
                 else:
                     print("ERROR: {0} [Line {1}]".format(err.message, err.expr.token[3]))
+            except ParseException as err:
+                print("ERROR: {0} [Line {1}]".format(err.message, err.lineNo))
 
 
 def printResult(value, dataType):

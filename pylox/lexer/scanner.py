@@ -23,9 +23,6 @@ def tokenize(line, lineNo=0):
         if currIdx >= len(line):
             break
 
-    eolToken = TokenType.EOL, "<EOL>", currIdx, lineNo
-    tokens.append(eolToken)
-
     return tokens
 
 
