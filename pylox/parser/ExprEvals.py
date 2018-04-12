@@ -18,9 +18,10 @@ def evalVariableSet(self):
 def evalVariableDecl(self):
     if self.right is None:
         raise EvaluationException("No right node on var declaration", self)
-    environment[self.right.token[1]] = None, DataType.NIL
     if self.right.right is not None and self.right.right.token[0] == TokenType.EQUAL:
         evalVariableSet(self.right)
+    else:
+        environment[self.right.token[1]] = None, DataType.NIL
 
 
 def evalExpr(self):
