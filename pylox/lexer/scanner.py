@@ -3,13 +3,19 @@ import re
 from pylox.error_reporting import error
 from pylox.lexer.TokenType import TokenType
 
-def tokenize(line, lineNo=0):
+lineNo = 1
+
+
+def tokenize(line):
+    global lineNo
+
     line = line.strip()
     tokens = list()
+    lineNo = 1
     currIdx = 0
 
     while True:
-        token = getNextToken(line, currIdx, lineNo)
+        token = getNextToken(line, currIdx)
         if token is not None:
             if token[0] == TokenType.STRING:
                 tokens.append(token)
@@ -26,7 +32,14 @@ def tokenize(line, lineNo=0):
     return tokens
 
 
-def getNextToken(line, currIdx, lineNo):
+def getNextToken(line, currIdx):
+    global lineNo
+    if line[currIdx] == '\n':
+        lineNo += 1
+        return
+    elif line[currIdx] == '\r':
+        return
+
     switcher = {
         '(': TokenType.LEFT_PAREN,
         ')': TokenType.RIGHT_PAREN,

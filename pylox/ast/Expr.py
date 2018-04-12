@@ -7,6 +7,9 @@ class ExprType(Enum):
     GROUPING = 3
     UNARY = 4
     BINARY = 5
+    PRINT = 6
+    VAR = 7
+    IDENTIFIER = 8
 
 
 class DataType(Enum):

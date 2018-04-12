@@ -1,4 +1,4 @@
 class ParseException(Exception):
-    def __init__(self, message, lineNo):
+    def __init__(self, message, token = None):
         self.message = message
-        self.lineNo = lineNo
+        self.token = token

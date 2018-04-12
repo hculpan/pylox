@@ -4,9 +4,28 @@ from pylox.ast.Expr import DataType
 from pylox.EvaluationException import EvaluationException
 
 
+environment = {}
+
+
+def evalVariableGet(self):
+    return environment[self.token[1]]
+
+
+def evalVariableSet(self):
+    environment[self.token[1]] = self.right.right.evaluate()
+
+
+def evalVariableDecl(self):
+    if self.right is None:
+        raise EvaluationException("No right node on var declaration", self)
+    environment[self.right.token[1]] = None, DataType.NIL
+    if self.right.right is not None and self.right.right.token[0] == TokenType.EQUAL:
+        evalVariableSet(self.right)
+
+
 def evalExpr(self):
     if self.left is not None:
-        error("Left on EXPRESSION is not none!  What do I do?")
+        EvaluationException("Left on EXPRESSION is not none!  What do I do?", self)
     if self.right is not None:
         return self.right.evaluate()
 
@@ -30,11 +49,26 @@ def evalUnary(self):
         raise EvaluationException("Invalid data type for unary operator", self.right)
 
 
+def evalPrint(self):
+    if self.right is None:
+        raise EvaluationException("Invalid statement, missing expression", self)
+
+    m1 = self.right.evaluate()
+    if m1[1] == DataType.BOOLEAN and m1[0]:
+        print("true")
+    elif m1[1] == DataType.BOOLEAN and not m1[0]:
+        print("false")
+    elif m1[1] == DataType.NIL:
+        print("nil")
+    else:
+        print(m1[0])
+
+
 def evalMultiplication(self):
     if self.left is None:
         raise EvaluationException("Left mode missing", self)
     elif self.right is None:
-        raise EvaluationException("Left mode missing", self)
+        raise EvaluationException("Right mode missing", self)
 
     m1 = self.left.evaluate()
     if m1[1] != DataType.INTEGER and m1[1] != DataType.DOUBLE:

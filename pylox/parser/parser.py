@@ -12,23 +12,50 @@ def parse(tokenList):
     global tokens, currIdx
     currIdx = 0
     tokens = tokenList
-    return exprStmt()
+    stmts = list()
+    while not isEndOfTokens():
+        stmts.append(declaration())
+    return stmts
 
 
-def consume(tokenType):
-    token = peekToken()
-    if token is None:
-        raise ParseException("Expected {0}, no more tokens found".format(tokenType), 0)
-    elif token[0] != tokenType:
-        raise ParseException("Expected {0}, found {1}".format(tokenType, token[1]), 0)
+def declaration():
+    if matchesToken(TokenType.VAR):
+        result = varDecl()
     else:
-        nextToken()
-
-
-def exprStmt():
-    result = expression()
+        result = statement()
     consume(TokenType.SEMICOLON)
     return result
+
+
+def varDecl():
+    expr = Expr(ExprType.VAR, nextToken())
+    if matchesToken(TokenType.IDENTIFIER):
+        expr.right = Expr(ExprType.IDENTIFIER, nextToken())
+        expr.eval = evalVariableDecl
+    else:
+        raise ParseException("Identifier expected, found {0}".format(peekToken()[1]), 0)
+    if matchesToken(TokenType.EQUAL):
+        eqexp = Expr(ExprType.VAR, nextToken())
+        eqexp.eval = evalVariableSet
+        eqexp.right = expression()
+        expr.right.right = eqexp
+
+    return expr
+
+
+def statement():
+    if matchesToken(TokenType.PRINT):
+        return printStmt()
+    else:
+        return expression()
+
+
+def printStmt():
+    expr = Expr(ExprType.PRINT)
+    expr.token = nextToken()
+    expr.eval = evalPrint
+    expr.right = expression()
+    return expr
 
 
 def expression():
@@ -108,9 +135,13 @@ def primary():
         result.right = addition()
         result.eval = evalGrouping
         if not matchesToken(TokenType.RIGHT_PAREN):
-            error("Expecting ')', found {0}".format(peekToken()[1]), peekToken()[3])
+            raise ParseException("Expecting ')', found {0}".format(peekToken()[1]), peekToken())
         else:
             nextToken()
+    elif matchesToken(TokenType.IDENTIFIER):
+        result.type = ExprType.IDENTIFIER
+        result.eval = evalVariableGet
+        result.token = nextToken()
     else:
         result.type = ExprType.LITERAL
         result.eval = evalLiteral
@@ -174,3 +205,13 @@ def matchesToken(*tokenTypess):
 
 def isEndOfTokens():
     return currIdx >= len(tokens)
+
+
+def consume(tokenType):
+    token = peekToken()
+    if token is None:
+        raise ParseException("Expected {0}, no more tokens found".format(tokenType), token)
+    elif token[0] != tokenType:
+        raise ParseException("Expected {0}, found {1}".format(tokenType, token[1]), token)
+    else:
+        nextToken()
