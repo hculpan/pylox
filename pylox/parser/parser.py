@@ -30,15 +30,13 @@ def declaration():
 def varDecl():
     expr = Expr(ExprType.VAR, nextToken())
     if matchesToken(TokenType.IDENTIFIER):
-        expr.right = Expr(ExprType.IDENTIFIER, nextToken())
+        expr.left = Expr(ExprType.IDENTIFIER, nextToken())
         expr.eval = evalVariableDecl
     else:
         raise ParseException("Identifier expected, found {0}".format(peekToken()[1]), 0)
     if matchesToken(TokenType.EQUAL):
-        eqexp = Expr(ExprType.VAR, nextToken())
-        eqexp.eval = evalVariableSet
-        eqexp.right = expression()
-        expr.right.right = eqexp
+        nextToken()
+        expr.right = expression()
 
     return expr
 
@@ -46,8 +44,24 @@ def varDecl():
 def statement():
     if matchesToken(TokenType.PRINT):
         return printStmt()
+    elif matchesToken(TokenType.LEFT_BRACE):
+        return block()
     else:
         return expression()
+
+
+def block():
+    expr = Expr(ExprType.BLOCK, nextToken())
+    expr.eval = evalBlock
+
+    statements = list()
+    while not matchesToken(TokenType.RIGHT_BRACE) and not isEndOfTokens():
+        statements.append(declaration())
+
+    if matchesToken(TokenType.RIGHT_BRACE):
+        nextToken()
+    expr.right = statements
+    return expr
 
 
 def printStmt():
@@ -61,7 +75,19 @@ def printStmt():
 def expression():
     expr = Expr()
     expr.eval = evalExpr
-    expr.right = equality()
+    return assignment()
+
+
+def assignment():
+    expr = equality()
+
+    if matchesToken(TokenType.EQUAL):
+        assExpr = Expr(ExprType.ASSIGNMENT, nextToken())
+        assExpr.eval = evalAssignment
+        assExpr.left = expr
+        assExpr.right = assignment()
+        expr = assExpr
+
     return expr
 
 
@@ -170,7 +196,7 @@ def primary():
     return result
 
 
-def peekToken():
+def peekToken(lookAhead=0):
     if isEndOfTokens():
         return None
     else:
@@ -194,17 +220,22 @@ def prevToken():
     currIdx -= 1
 
 
-def matchesToken(*tokenTypess):
-    currToken = peekToken()
+def matchesToken(*tokenTypes):
+    if tokenTypes[0] is TokenType:
+        currToken = tokenTypes[0]
+        del tokenTypes[0]
+    else:
+        currToken = peekToken()
+
     if currToken is not None:
-        for tokenType in tokenTypess:
+        for tokenType in tokenTypes:
             if tokenType == currToken[0]:
                 return True
     return False
 
 
-def isEndOfTokens():
-    return currIdx >= len(tokens)
+def isEndOfTokens(offset=0):
+    return currIdx + offset >= len(tokens)
 
 
 def consume(tokenType):

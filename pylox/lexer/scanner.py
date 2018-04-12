@@ -4,10 +4,11 @@ from pylox.error_reporting import error
 from pylox.lexer.TokenType import TokenType
 
 lineNo = 1
+currIdx = 0
 
 
 def tokenize(line):
-    global lineNo
+    global lineNo, currIdx
 
     line = line.strip()
     tokens = list()
@@ -15,7 +16,7 @@ def tokenize(line):
     currIdx = 0
 
     while True:
-        token = getNextToken(line, currIdx)
+        token = getNextToken(line)
         if token is not None:
             if token[0] == TokenType.STRING:
                 tokens.append(token)
@@ -32,8 +33,9 @@ def tokenize(line):
     return tokens
 
 
-def getNextToken(line, currIdx):
-    global lineNo
+def getNextToken(line):
+    global lineNo, currIdx
+
     if line[currIdx] == '\n':
         lineNo += 1
         return
@@ -97,7 +99,11 @@ def getNextToken(line, currIdx):
                 return TokenType.GREATER, line[currIdx], currIdx, lineNo
         elif c1 == '/':
             if c2 == '/':
-                return TokenType.COMMENT, line[currIdx:], currIdx, lineNo
+                eol = line[currIdx:].find('\n')
+                if eol == -1:
+                    currIdx = len(line)
+                else:
+                    currIdx = currIdx + eol
             else:
                 return TokenType.SLASH, line[currIdx], currIdx, lineNo
 

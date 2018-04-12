@@ -10,6 +10,8 @@ class ExprType(Enum):
     PRINT = 6
     VAR = 7
     IDENTIFIER = 8
+    ASSIGNMENT = 9
+    BLOCK = 10
 
 
 class DataType(Enum):

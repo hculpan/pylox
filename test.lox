@@ -1,6 +1,4 @@
-var a = 12;
+var a = true;
 var b = 2;
-var msg = "Total of ";
-print msg + a + " * " + b + " = " + (a * b);
-var a = a * b;
-print msg + a + " * " + b + " = " + (a * b);
+
+print b != 2;

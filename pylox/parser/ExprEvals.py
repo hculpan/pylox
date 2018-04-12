@@ -2,26 +2,50 @@ from pylox.error_reporting import error
 from pylox.lexer.TokenType import TokenType
 from pylox.ast.Expr import DataType
 from pylox.EvaluationException import EvaluationException
+from pylox.interpreter.Environment import Environment
 
 
-environment = {}
+environment = Environment()
+currentBlockEnvironment = environment
+
+
+def evalBlock(self):
+    global currentBlockEnvironment
+
+    currentBlockEnvironment = Environment(currentBlockEnvironment)
+    for statement in self.right:
+        statement.evaluate()
+    currentBlockEnvironment = currentBlockEnvironment.container
 
 
 def evalVariableGet(self):
-    return environment[self.token[1]]
+    global currentBlockEnvironment
 
-
-def evalVariableSet(self):
-    environment[self.token[1]] = self.right.right.evaluate()
+    return currentBlockEnvironment.get(self.token[1])
 
 
 def evalVariableDecl(self):
-    if self.right is None:
-        raise EvaluationException("No right node on var declaration", self)
-    if self.right.right is not None and self.right.right.token[0] == TokenType.EQUAL:
-        evalVariableSet(self.right)
+    global currentBlockEnvironment
+
+    if self.left is None:
+        raise EvaluationException("No left node on var declaration", self)
+    if self.right is not None:
+        data = self.right.evaluate()
+        currentBlockEnvironment.declare(self.left.token[1])
+        currentBlockEnvironment.set(self.left.token[1], data[0], data[1])
     else:
-        environment[self.right.token[1]] = None, DataType.NIL
+        currentBlockEnvironment.declare(self.left.token[1])
+
+
+def evalAssignment(self):
+    global currentBlockEnvironment
+
+    if self.right is None:
+        raise EvaluationException('No r-value for assignment', self)
+    if self.left is None:
+        raise EvaluationException('No l-value for assignment', self)
+    data = self.right.evaluate()
+    currentBlockEnvironment.set(self.left.token[1], data[0], data[1])
 
 
 def evalExpr(self):
