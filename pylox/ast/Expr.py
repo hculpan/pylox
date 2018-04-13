@@ -12,6 +12,11 @@ class ExprType(Enum):
     IDENTIFIER = 8
     ASSIGNMENT = 9
     BLOCK = 10
+    IF = 11
+    OR = 12
+    AND = 13
+    WHILE = 14
+    FOR = 15
 
 
 class DataType(Enum):
@@ -36,6 +41,8 @@ class Expr:
         self.eval = defaultEval
         self.value = None
         self.dataType = DataType.UNKNOWN
+        self.condition = None
+        self.increment = None
 
     def __repr__(self):
         if self.token is not None:

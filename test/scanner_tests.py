@@ -1,6 +1,6 @@
 import unittest
 
-from pylox.lexer.scanner import tokenize, TokenType
+from pylox.scanner.scanner import tokenize, TokenType
 
 
 class MyTest(unittest.TestCase):

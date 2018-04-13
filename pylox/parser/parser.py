@@ -1,8 +1,8 @@
 from pylox.ast.Expr import Expr, ExprType
 from pylox.parser.ExprEvals import *
 from pylox.ast.Expr import DataType
-from pylox.lexer.scanner import TokenType
-from pylox.ParseException import ParseException
+from pylox.scanner.scanner import TokenType
+from pylox.exceptions.ParseException import ParseException
 
 currIdx = 0
 tokens = list()
@@ -23,7 +23,6 @@ def declaration():
         result = varDecl()
     else:
         result = statement()
-    consume(TokenType.SEMICOLON)
     return result
 
 
@@ -38,6 +37,7 @@ def varDecl():
         nextToken()
         expr.right = expression()
 
+    consume(TokenType.SEMICOLON)
     return expr
 
 
@@ -46,8 +46,67 @@ def statement():
         return printStmt()
     elif matchesToken(TokenType.LEFT_BRACE):
         return block()
+    elif matchesToken(TokenType.IF):
+        return ifStmt()
+    elif matchesToken(TokenType.WHILE):
+        return whileStmt()
+    elif matchesToken(TokenType.FOR):
+        return forStmt()
     else:
-        return expression()
+        return exprStmt()
+
+
+def forStmt():
+    token = nextToken()
+    consume(TokenType.LEFT_PAREN)
+
+    if matchesToken(TokenType.VAR):
+        left = varDecl()
+    else:
+        left = exprStmt()
+
+    if not matchesToken(TokenType.SEMICOLON):
+        condition = expression()
+    consume(TokenType.SEMICOLON)
+
+    if not matchesToken(TokenType.RIGHT_PAREN):
+        increment = expression()
+    consume(TokenType.RIGHT_PAREN)
+
+    expr = Expr(ExprType.FOR, token)
+    expr.left = left
+    expr.right = statement()
+    expr.increment = increment
+    expr.condition = condition
+    expr.eval = evalFor
+    return expr
+
+
+def whileStmt():
+    token = nextToken()
+    consume(TokenType.LEFT_PAREN)
+    conditional = expression()
+    consume(TokenType.RIGHT_PAREN)
+    body = statement()
+
+    expr = Expr(ExprType.WHILE, token)
+    expr.condition = conditional
+    expr.right = body
+    expr.eval = evalWhile
+    return expr
+
+
+def ifStmt():
+    expr = Expr(ExprType.IF, nextToken())
+    expr.eval = evalIf
+    consume(TokenType.LEFT_PAREN)
+    expr.condition = expression()
+    consume(TokenType.RIGHT_PAREN)
+    expr.left = statement()
+    if matchesToken(TokenType.ELSE):
+        consume(TokenType.ELSE)
+        expr.right = statement()
+    return expr
 
 
 def block():
@@ -58,8 +117,7 @@ def block():
     while not matchesToken(TokenType.RIGHT_BRACE) and not isEndOfTokens():
         statements.append(declaration())
 
-    if matchesToken(TokenType.RIGHT_BRACE):
-        nextToken()
+    consume(TokenType.RIGHT_BRACE)
     expr.right = statements
     return expr
 
@@ -69,6 +127,7 @@ def printStmt():
     expr.token = nextToken()
     expr.eval = evalPrint
     expr.right = expression()
+    consume(TokenType.SEMICOLON)
     return expr
 
 
@@ -78,8 +137,14 @@ def expression():
     return assignment()
 
 
+def exprStmt():
+    expr = expression()
+    consume(TokenType.SEMICOLON)
+    return expr
+
+
 def assignment():
-    expr = equality()
+    expr = logicOr()
 
     if matchesToken(TokenType.EQUAL):
         assExpr = Expr(ExprType.ASSIGNMENT, nextToken())
@@ -87,6 +152,35 @@ def assignment():
         assExpr.left = expr
         assExpr.right = assignment()
         expr = assExpr
+
+    return expr
+
+
+def logicOr():
+    expr = logicAnd()
+
+    while matchesToken(TokenType.OR):
+        token = nextToken()
+        right = logicAnd()
+        left = expr
+        expr = Expr(ExprType.OR, token)
+        expr.left = left
+        expr.right = right
+        expr.eval = evalLogical
+
+    return expr
+
+
+def logicAnd():
+    expr = equality()
+    while matchesToken(TokenType.AND):
+        token = nextToken()
+        right = equality()
+        left = expr
+        expr = Expr(ExprType.AND, token)
+        expr.left = left
+        expr.right = right
+        expr.eval = evalLogical
 
     return expr
 
@@ -161,7 +255,7 @@ def primary():
         result.right = addition()
         result.eval = evalGrouping
         if not matchesToken(TokenType.RIGHT_PAREN):
-            raise ParseException("Expecting ')', found {0}".format(peekToken()[1]), peekToken())
+            raise ParseException("Expecting ')', found {0}".format(peekToken().text), peekToken())
         else:
             nextToken()
     elif matchesToken(TokenType.IDENTIFIER):
@@ -182,21 +276,21 @@ def primary():
             result.value = None
             result.dataType = DataType.NIL
         elif matchesToken(TokenType.STRING):
-            result.value = result.token[1]
+            result.value = result.token.text
             result.dataType = DataType.STRING
         elif matchesToken(TokenType.NUMBER):
-            if result.token[1].find(".") > -1:
-                result.value = float(result.token[1])
+            if result.token.text.find(".") > -1:
+                result.value = float(result.token.text)
                 result.dataType = DataType.DOUBLE
             else:
-                result.value = int(result.token[1])
+                result.value = int(result.token.text)
                 result.dataType = DataType.INTEGER
         nextToken()
 
     return result
 
 
-def peekToken(lookAhead=0):
+def peekToken():
     if isEndOfTokens():
         return None
     else:
@@ -229,20 +323,20 @@ def matchesToken(*tokenTypes):
 
     if currToken is not None:
         for tokenType in tokenTypes:
-            if tokenType == currToken[0]:
+            if tokenType == currToken.type:
                 return True
     return False
 
 
 def isEndOfTokens(offset=0):
-    return currIdx + offset >= len(tokens)
+    return currIdx + offset >= len(tokens) or tokens[currIdx] == TokenType.EOF
 
 
 def consume(tokenType):
     token = peekToken()
     if token is None:
         raise ParseException("Expected {0}, no more tokens found".format(tokenType), token)
-    elif token[0] != tokenType:
-        raise ParseException("Expected {0}, found {1}".format(tokenType, token[1]), token)
+    elif token.type != tokenType:
+        raise ParseException("Expected {0}, found {1}".format(tokenType, token.text), token)
     else:
         nextToken()

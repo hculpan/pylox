@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TokenType(Enum):
     LEFT_PAREN = 1
     RIGHT_PAREN = 2
@@ -23,23 +24,22 @@ class TokenType(Enum):
     IDENTIFIER = 20
     STRING = 21
     NUMBER = 22
-    COMMENT = 23
-    AND = 24
-    CLASS = 25
-    ELSE = 26
-    FALSE = 27
-    FUN = 28
-    FOR = 29
-    IF = 30
-    NIL = 31
-    OR = 32
-    PRINT = 33
-    RETURN = 34
-    SUPER = 35
-    THIS = 36
-    TRUE = 37
-    VAR = 38
-    WHILE = 39
+    AND = 23
+    CLASS = 24
+    ELSE = 25
+    FALSE = 26
+    FUN = 27
+    FOR = 28
+    IF = 29
+    NIL = 30
+    OR = 31
+    PRINT = 32
+    RETURN = 33
+    SUPER = 34
+    THIS = 35
+    TRUE = 36
+    VAR = 37
+    WHILE = 38
     EOF = 40
     WHITESPACE = 41
 

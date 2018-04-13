@@ -1,7 +1,8 @@
 import re
 
-from pylox.error_reporting import error
-from pylox.lexer.TokenType import TokenType
+from pylox.scanner.TokenType import TokenType
+from pylox.scanner.Token import Token
+from pylox.exceptions.ScannerExceptions import ScannerException
 
 lineNo = 1
 currIdx = 0
@@ -18,12 +19,12 @@ def tokenize(line):
     while True:
         token = getNextToken(line)
         if token is not None:
-            if token[0] == TokenType.STRING:
+            if token.type == TokenType.STRING:
                 tokens.append(token)
                 currIdx += 2
-            elif token[0] != TokenType.WHITESPACE:
+            elif token.type != TokenType.WHITESPACE:
                 tokens.append(token)
-            currIdx += len(token[1])
+            currIdx += len(token.text)
         else:
             currIdx += 1
 
@@ -58,7 +59,7 @@ def getNextToken(line):
     }
     token = switcher.get(line[currIdx])
     if token is not None:
-        return token, line[currIdx], currIdx, lineNo
+        return Token(token, line[currIdx], currIdx, lineNo)
     else:
         c1 = line[currIdx]
         if currIdx >= len(line) - 1:
@@ -68,35 +69,45 @@ def getNextToken(line):
         if c1 == '"':
             try:
                 found = re.search('^"(.*?)"', line[currIdx:]).group(1)
-                return TokenType.STRING, found, currIdx + 1, lineNo
+                return Token(TokenType.STRING, found, currIdx + 1, lineNo)
             except AttributeError:
-                error("No closing quote", lineNo)
+                raise ScannerException("No closing quote", lineNo)
         elif c1.isalpha() or c1 == "_":
             found = re.search("(^[a-zA-Z][a-zA-Z0-9_]*)", line[currIdx:]).group(1)
-            return checkIfKeywordType(found), str(found), currIdx, lineNo
+            return Token(checkIfKeywordType(found), str(found), currIdx, lineNo)
         elif c1.isdigit():
             found = re.search("(^[+ -]?[0-9]+([.][0-9]*)?)", line[currIdx:]).group(1)
-            return TokenType.NUMBER, str(found), currIdx, lineNo
+            return Token(TokenType.NUMBER, str(found), currIdx, lineNo)
         elif c1 == '!':
             if c2 == "=":
-                return TokenType.BANG_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
+                return Token(TokenType.BANG_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo)
             else:
-                return TokenType.BANG, line[currIdx], currIdx, lineNo
+                return Token(TokenType.BANG, line[currIdx], currIdx, lineNo)
         elif c1 == '=':
             if c2 == '=':
-                return TokenType.EQUAL_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
+                return Token(TokenType.EQUAL_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo)
             else:
-                return TokenType.EQUAL, line[currIdx], currIdx, lineNo
+                return Token(TokenType.EQUAL, line[currIdx], currIdx, lineNo)
         elif c1 == '<':
             if c2 == '=':
-                return TokenType.LESS_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
+                return Token(TokenType.LESS_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo)
             else:
-                return TokenType.LESS, line[currIdx], currIdx, lineNo
+                return Token(TokenType.LESS, line[currIdx], currIdx, lineNo)
         elif c1 == '>':
             if c2 == '=':
-                return TokenType.GREATER_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo
+                return Token(TokenType.GREATER_EQUAL, line[currIdx:currIdx + 2], currIdx, lineNo)
             else:
-                return TokenType.GREATER, line[currIdx], currIdx, lineNo
+                return Token(TokenType.GREATER, line[currIdx], currIdx, lineNo)
+        elif c1 == '|':
+            if c2 == '|':
+                return Token(TokenType.OR, line[currIdx:currIdx + 2], currIdx, lineNo)
+            else:
+                raise ScannerException("Unrecognized operator '|' in line {0}".format(lineNo))
+        elif c1 == '&':
+            if c2 == '&':
+                return Token(TokenType.AND, line[currIdx:currIdx + 2], currIdx, lineNo)
+            else:
+                raise ScannerException("Unrecognized operator '|' in line {0}".format(lineNo))
         elif c1 == '/':
             if c2 == '/':
                 eol = line[currIdx:].find('\n')
@@ -105,12 +116,11 @@ def getNextToken(line):
                 else:
                     currIdx = currIdx + eol
             else:
-                return TokenType.SLASH, line[currIdx], currIdx, lineNo
+                return Token(TokenType.SLASH, line[currIdx], currIdx, lineNo)
 
 
 def checkIfKeywordType(text):
     switcher = {
-        "and"       : TokenType.AND,
         "class"     : TokenType.CLASS,
         "else"      : TokenType.ELSE,
         "false"     : TokenType.FALSE,
@@ -118,7 +128,6 @@ def checkIfKeywordType(text):
         "for"       : TokenType.FOR,
         "if"        : TokenType.IF,
         "nil"       : TokenType.NIL,
-        "or"        : TokenType.OR,
         "print"     : TokenType.PRINT,
         "return"    : TokenType.RETURN,
         "super"     : TokenType.SUPER,

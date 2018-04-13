@@ -2,7 +2,7 @@ import unittest
 import sys
 
 from pylox.parser.parser import parse
-from pylox.lexer.scanner import tokenize
+from pylox.scanner.scanner import tokenize
 from pylox.ast.Expr import ExprType
 
 

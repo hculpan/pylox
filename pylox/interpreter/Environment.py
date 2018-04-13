@@ -1,4 +1,4 @@
-from pylox.EvaluationException import EvaluationException
+from pylox.exceptions.EvaluationException import EvaluationException
 from pylox.ast.Expr import DataType
 
 

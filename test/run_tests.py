@@ -2,7 +2,7 @@ import unittest
 
 from pylox.run import runLine
 from pylox.ast.Expr import DataType
-from pylox.EvaluationException import EvaluationException
+from pylox.exceptions.EvaluationException import EvaluationException
 
 
 class RunTests(unittest.TestCase):
