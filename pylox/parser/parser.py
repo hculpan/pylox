@@ -1,6 +1,6 @@
-from pylox.ast.Expr import Expr, ExprType
-from pylox.parser.ExprEvals import *
-from pylox.ast.Expr import DataType
+from pylox.ast.Expr import Expr
+from pylox.interpreter.ExprEvals import *
+from pylox.interpreter.Data import DataType
 from pylox.scanner.scanner import TokenType
 from pylox.exceptions.ParseException import ParseException
 
@@ -21,9 +21,37 @@ def parse(tokenList):
 def declaration():
     if matchesToken(TokenType.VAR):
         result = varDecl()
+    elif matchesToken(TokenType.FUN):
+        result = funDecl()
     else:
         result = statement()
     return result
+
+
+def funDecl():
+    expr = Expr(ExprType.FUNCTION, nextToken())
+    if not matchesToken(TokenType.IDENTIFIER):
+        raise ParseException("Expected fucntion identifier, found {0}".format(peekToken().text), peekToken())
+    expr.value = consume(TokenType.IDENTIFIER).text
+    expr.left = parameters()
+    expr.right = block()
+    expr.eval = evalFunc
+    return expr
+
+
+def parameters():
+    params = list()
+
+    consume(TokenType.LEFT_PAREN)
+    if not matchesToken(TokenType.RIGHT_PAREN):
+        params.append(consume(TokenType.IDENTIFIER))
+        while matchesToken(TokenType.COMMA):
+            consume(TokenType.COMMA)
+            params.append(consume(TokenType.IDENTIFIER))
+
+    consume(TokenType.RIGHT_PAREN)
+
+    return params
 
 
 def varDecl():
@@ -50,34 +78,43 @@ def statement():
         return ifStmt()
     elif matchesToken(TokenType.WHILE):
         return whileStmt()
+    elif matchesToken(TokenType.RETURN):
+        return returnStmt()
     elif matchesToken(TokenType.FOR):
         return forStmt()
     else:
         return exprStmt()
 
 
+def returnStmt():
+    expr = Expr(ExprType.RETURN, nextToken())
+    expr.eval = evalReturn
+    if not matchesToken(TokenType.SEMICOLON):
+        expr.right = expr.right = expression()
+    consume(TokenType.SEMICOLON)
+    return expr
+
+
 def forStmt():
-    token = nextToken()
+    expr = Expr(ExprType.FOR, nextToken())
     consume(TokenType.LEFT_PAREN)
 
     if matchesToken(TokenType.VAR):
-        left = varDecl()
+        expr.left = varDecl()
+    elif not matchesToken(TokenType.SEMICOLON):
+        expr.left = exprStmt()
     else:
-        left = exprStmt()
+        consume(TokenType.SEMICOLON)
 
     if not matchesToken(TokenType.SEMICOLON):
-        condition = expression()
+        expr.condition = expression()
     consume(TokenType.SEMICOLON)
 
     if not matchesToken(TokenType.RIGHT_PAREN):
-        increment = expression()
+        expr.increment = expression()
     consume(TokenType.RIGHT_PAREN)
 
-    expr = Expr(ExprType.FOR, token)
-    expr.left = left
     expr.right = statement()
-    expr.increment = increment
-    expr.condition = condition
     expr.eval = evalFor
     return expr
 
@@ -244,7 +281,37 @@ def unary():
         expr.right = unary()
         return expr
     else:
-        return primary()
+        return call()
+
+
+def call():
+    expr = primary()
+    if matchesToken(TokenType.LEFT_PAREN):
+        callExpr = Expr(ExprType.CALL, nextToken())
+        callExpr.left = expr
+        callExpr.right = arguments()
+        callExpr.eval = evalCall
+        consume(TokenType.RIGHT_PAREN)
+        expr = callExpr
+
+    return expr
+
+
+def arguments():
+    args = list()
+
+    if not matchesToken(TokenType.RIGHT_PAREN):
+        arg = expression()
+        if arg is not None:
+            args.append(arg)
+        while matchesToken(TokenType.COMMA):
+            consume(TokenType.COMMA)
+            arg = expression()
+            if arg is not None:
+                args.append(arg)
+        return args
+    else:
+        return None
 
 
 def primary():
@@ -339,4 +406,4 @@ def consume(tokenType):
     elif token.type != tokenType:
         raise ParseException("Expected {0}, found {1}".format(tokenType, token.text), token)
     else:
-        nextToken()
+        return nextToken()

@@ -1,5 +1,5 @@
-from pylox.exceptions.EvaluationException import EvaluationException
-from pylox.ast.Expr import DataType
+from pylox.exceptions.RuntimeException import RuntimeException
+from pylox.interpreter.Data import DataType, Data
 
 
 class Environment:
@@ -10,14 +10,14 @@ class Environment:
     def declare(self, key):
         self.environment[key] = None, DataType.NIL
 
-    def set(self, key, value, dataType):
+    def set(self, key, data):
         if key in self.environment:
-            self.environment[key] = value, dataType
+            self.environment[key] = data
             return True
-        elif self.container is not None and self.container.set(key, value, dataType):
+        elif self.container is not None and self.container.set(key, data):
             return True
         else:
-            raise EvaluationException("Cannot set undefined variable '{0}'".format(key))
+            raise RuntimeException("Cannot set undefined variable '{0}'".format(key))
 
     def get(self, key):
         if key in self.environment:
@@ -25,4 +25,4 @@ class Environment:
         elif self.container is not None:
             return self.container.get(key)
         else:
-            raise EvaluationException("Undefined variable '{0}'".format(key))
+            raise RuntimeException("Undefined variable '{0}'".format(key))

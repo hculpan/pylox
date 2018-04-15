@@ -1,0 +1,16 @@
+fun func1(n) {
+    return n + 1;
+}
+
+fun isEven(n) {
+    return mod(n, 2) == 0;
+}
+
+fun isOdd(n) {
+    return !isEven(n);
+}
+
+var a;
+for (var n = 0; n < 20; n = n + 1) {
+    if (isOdd(a = func1(n))) print a + " is odd";
+}

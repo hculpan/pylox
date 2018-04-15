@@ -3,9 +3,9 @@ from pathlib import Path
 
 from pylox.run import runLine, runProgram
 from pylox.error_reporting import clearError
-from pylox.exceptions.EvaluationException import EvaluationException
+from pylox.exceptions.RuntimeException import RuntimeException
 from pylox.exceptions.ParseException import ParseException
-from pylox.ast.Expr import DataType
+from pylox.interpreter.Data import DataType
 
 
 def main():
@@ -42,7 +42,7 @@ def runPrompt():
                 result = runLine(0, line)
                 if result is not None:
                     printResult(result[0], result[1])
-            except EvaluationException as err:
+            except RuntimeException as err:
                 if err.expr.token[3] > 0:
                     print("Runtime error: {0}".format(err.message))
                 else:

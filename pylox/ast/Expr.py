@@ -1,5 +1,7 @@
 from enum import Enum
 
+from pylox.interpreter.Data import DataType
+
 
 class ExprType(Enum):
     EXPRESSION = 1
@@ -17,15 +19,10 @@ class ExprType(Enum):
     AND = 13
     WHILE = 14
     FOR = 15
-
-
-class DataType(Enum):
-    UNKNOWN = 1
-    INTEGER = 2
-    DOUBLE = 3
-    STRING = 4
-    BOOLEAN = 5
-    NIL = 6
+    CALL = 16
+    ARGUMENTS = 17
+    FUNCTION = 18
+    RETURN = 19
 
 
 def defaultEval(self):

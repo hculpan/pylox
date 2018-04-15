@@ -1,8 +1,8 @@
 import unittest
 
 from pylox.run import runLine
-from pylox.ast.Expr import DataType
-from pylox.exceptions.EvaluationException import EvaluationException
+from pylox.interpreter.Data import DataType
+from pylox.exceptions.RuntimeException import RuntimeException
 
 
 class RunTests(unittest.TestCase):
@@ -120,7 +120,7 @@ class RunTests(unittest.TestCase):
     def test_run_23(self):
         try:
             result = runLine(0, '"abc" < 1;')
-        except EvaluationException as err:
+        except RuntimeException as err:
             assert True
         else:
             assert False

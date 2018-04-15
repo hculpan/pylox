@@ -1,0 +1,5 @@
+fun myFunc(z) {
+    return z + 1;
+}
+
+print myFunc(15) + 3;
